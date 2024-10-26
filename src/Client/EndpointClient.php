@@ -17,5 +17,4 @@ class EndpointClient extends BaseApiClient
         return new Endpoint($response->toArray());
 
     }
-
 }

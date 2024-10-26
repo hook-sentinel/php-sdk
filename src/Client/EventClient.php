@@ -3,8 +3,8 @@
 namespace HookSentinel\Client;
 
 
-use Symfony\Component\HttpFoundation\Request;
 use HookSentinel\Exception\InvalidSignatureException;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 
 class EventClient extends BaseApiClient
 {
@@ -15,8 +15,10 @@ class EventClient extends BaseApiClient
 
     public ?string $endpointSignatureAlgorithm = 'sha512';
 
+    private ?ResponseInterface $latestResponse = null;
 
-    public function send(array $content,?string $id = null, ?string $endpointSignatureKey = null) : string
+
+    public function send(array $content,?string $id = null, ?string $endpointSignatureKey = null) : ResponseInterface
     {
         $endpointSignatureKey = $endpointSignatureKey ?? $this->endpointSignatureKey;
         $id = $id ?? $this->endpointId;
@@ -39,9 +41,25 @@ class EventClient extends BaseApiClient
             ]
         ]);
 
-        return $response->getContent();
+        $this->latestResponse = $response;
+
+        return $response;
 
     }
+
+
+    public function logResponse(string | array $response, int $responseCode = 200,?string $deliveryId = null) : ResponseInterface
+    {
+        $deliveryId = $deliveryId ?? $this->latestResponse?->getHeaders()['x-delivery-id'][0] ?? null;
+
+        if(null === $deliveryId) {
+            throw new \Exception('Delivery ID is required, Did you forget to call send() before logResponse()?');
+        }
+
+        return $this->client->deliveries->log($response,$responseCode,$deliveryId);
+
+    }
+
 
 
     function getEventData(string $signatureSecret) : array

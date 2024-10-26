@@ -2,11 +2,15 @@
 
 namespace HookSentinel\Client;
 
+use HookSentinel\Client;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 abstract class BaseApiClient
 {
+
+
+    public ?Client $client;
 
     public function __construct(
         private readonly HttpClientInterface $httpClient,
